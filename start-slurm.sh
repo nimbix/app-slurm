@@ -14,7 +14,7 @@ for q in $(echo $config | jq -r keys[]); do
         size=$(echo $config | jq -r .$q.size)
         echo "NodeName=jarvice-${name}[1-${size}]" | \
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/nodes.conf
-        echo "PartitionName=jarvice-${name} Default=no Nodes=jarvice-${name}[1-${size}] DefaultTime=INFINITE State=UP" | \
+        echo "PartitionName=${name} Default=no Nodes=jarvice-${name}[1-${size}] DefaultTime=INFINITE State=UP" | \
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/partitions.conf
 done
 
