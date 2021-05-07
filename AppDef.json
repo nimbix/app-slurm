@@ -8,7 +8,7 @@
         "Software Development/Software Testing"
     ],
     "machines": [
-        "n[3-9]",
+        "n[0-9]",
         "n[1-9][0-9]",
         "ng[2-9]*",
         "ngd[3-9]*"
@@ -31,6 +31,43 @@
             "path": "/etc/slurm-llnl/start-slurm.sh",
             "interactive": true,
             "name": "Cluster",
+            "description": "Launch a session with all boot services, including SSH.  Connection address and credentials will appear in your web browser once available.  You may also connect and interact with the session graphically in your browser.  Once logged in you may use Slurm commands like sbatch and squeue to submit and monitor job status, or use mpirun with the machines file /etc/JARVICE/nodes to run parallel commands directly.",
+            "parameters": {
+                "APIKEY": {
+                    "name": "API key",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIKEY%",
+                    "variable": true
+                },
+                "APIURL": {
+                    "name": "API URL",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIURL%",
+                    "variable": true
+                },
+                "APIUSER": {
+                    "name": "API username",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIUSER%",
+                    "variable": true
+                },
+                "JARVICE_VAULT_NAME": {
+                    "name": "Vault name",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%VNAME%",
+                    "variable": true
+                }
+            }
+        },
+        "PublicCluster": {
+            "path": "/etc/slurm-llnl/start-slurm.sh",
+            "interactive": true,
+            "publicip": true,
+            "name": "Public Cluster",
             "description": "Launch a session with all boot services, including SSH.  Connection address and credentials will appear in your web browser once available.  You may also connect and interact with the session graphically in your browser.  Once logged in you may use Slurm commands like sbatch and squeue to submit and monitor job status, or use mpirun with the machines file /etc/JARVICE/nodes to run parallel commands directly.",
             "parameters": {
                 "APIKEY": {

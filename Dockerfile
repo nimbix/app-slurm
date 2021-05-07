@@ -1,7 +1,8 @@
 FROM ubuntu:bionic
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -yq install slurmctld slurmd sudo vim openssh-server curl
+    DEBIAN_FRONTEND=noninteractive apt-get -yq install slurmctld slurmd sudo vim \
+        openssh-server curl jq
 
 RUN mkdir -p /var/log/munge && chown -R munge:munge /var/log/munge && \
     mkdir -p /var/log/slurm
@@ -15,6 +16,7 @@ RUN printf '%s\n' \
 > /etc/sudoers.d/00-nimbix
 
 COPY start-slurm.sh /etc/slurm-llnl/start-slurm.sh
+copy start-worker.sh /etc/slurm-llnl/start-worker.sh
 
 COPY AppDef.json /etc/NAE/AppDef.json
 RUN curl --fail -X POST -d @/etc/NAE/AppDef.json https://cloud.nimbix.net/api/jarvice/validate
