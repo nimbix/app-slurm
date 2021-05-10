@@ -32,10 +32,12 @@ jxe_job=$(cat << EOF
 }
 EOF
 )
+rm $slurm_config/jxe-$1
 resp=$(echo $jxe_job | curl -X POST -H "Content-Type: application/json" \
     --data-binary @- $APIURL/jarvice/submit)
 number=$(echo $resp | jq -r .number)
 echo $number | sudo tee /etc/slurm-llnl/jxe-$1
+touch $slurm_config/jxe-$1
 while true; do
         sleep 30
         job_status=$(curl --data-urlencode "username=$APIUSER" \

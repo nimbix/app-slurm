@@ -12,10 +12,11 @@ config=$(cat /etc/slurm-llnl/partitions.json)
 for q in $(echo $config | jq -r keys[]); do
         name=$(echo $config | jq -r .$q.name)
         size=$(echo $config | jq -r .$q.size)
-        echo "NodeName=jarvice-${name}[1-${size}]" | \
+        echo "NodeName=jarvice-${name}[1-${size}] State=DOWN" | \
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/nodes.conf
         echo "PartitionName=${name} Default=no Nodes=jarvice-${name}[1-${size}] DefaultTime=INFINITE State=UP" | \
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/partitions.conf
+#        echo "127.0.0.1 jarvice-${name}1" | sudo tee /etc/hosts
 done
 
 sudo dd if=/dev/urandom bs=1 count=1024 of=/etc/slurm-llnl/munge.key &> /dev/null
@@ -26,6 +27,7 @@ read -r CTRLR < /etc/JARVICE/nodes
 sudo sed -i "s/ControlMachine=.*/ControlMachine=${CTRLR}/" /etc/slurm-llnl/slurm.conf
 
 dir=$(mktemp -d --tmpdir=/data)
+echo $dir | sudo tee /etc/slurm-llnl/slurm-configpath
 echo "slurm dir: $dir"
 cp -r /etc/slurm-llnl/* ${dir}
 cat /etc/hosts | grep $(hostname) > ${dir}/slurm-headnode
