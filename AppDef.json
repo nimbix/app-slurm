@@ -27,6 +27,26 @@
             "parameters": {},
             "path": "/sbin/init"
         },
+        "Worker": {
+            "path": "/etc/slurm-llnl/start-worker.sh",
+            "interactive": false,
+            "name": "Worker",
+            "description": "Start worker nodes",
+            "parameters": {
+                "CONFIG": {
+                    "name": "Config path",
+                    "required": true,
+                    "type": "STR",
+                    "positional": true
+                },
+                "NODENAME": {
+                    "name": "Worker node name",
+                    "required": true,
+                    "type": "STR",
+                    "positional": true
+                }
+            }
+        },
         "Cluster": {
             "path": "/etc/slurm-llnl/start-slurm.sh",
             "interactive": true,
