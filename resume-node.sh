@@ -34,16 +34,15 @@ EOF
 )
 rm $slurm_config/jxe-$1
 resp=$(echo $jxe_job | curl -X POST -H "Content-Type: application/json" \
-    --data-binary @- $APIURL/jarvice/submit)
+    --data-binary @- "$APIURL"jarvice/submit)
 number=$(echo $resp | jq -r .number)
 echo $number | sudo tee /etc/slurm-llnl/jxe-$1
-touch $slurm_config/jxe-$1
 while true; do
-        sleep 30
+        sleep 15
         job_status=$(curl --data-urlencode "username=$APIUSER" \
             --data-urlencode "apikey=$APIKEY" \
             --data-urlencode "number=$number" \
-            "$APIURL/jarvice/status")
+            "$APIURL""jarvice/status")
         index=$( printf '%d' $number )
         job_status=$(echo $job_status | jq -r .[\"$index\"].job_status)
         echo $job_status
@@ -52,5 +51,8 @@ while true; do
                 break
         fi
 done
-sleep 5
-cat $slurm_config/$1 | sudo tee --append /etc/hosts
+touch $slurm_config/jxe-$1
+slurm_worker_config=$(cat $slurm_config/$1)
+worker_ip=$(echo $slurm_worker_config | awk '{print $1}')
+echo $slurm_worker_config | sudo tee --append /etc/hosts
+sudo scontrol update nodename=$1 nodeaddr=$worker_ip nodehostname=$1
