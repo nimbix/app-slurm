@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+dir=$(mktemp -d --tmpdir=/data)
+
+function cleanup()
+{
+    rm -rf $dir
+}
+
+trap cleanup EXIT
+
 source /etc/JARVICE/jobenv.sh
 curl "$APIURL""jarvice/queues?username=$APIUSER&apikey=$APIKEY&info=true" | \
         jq . | sudo tee /etc/slurm-llnl/partitions.json
@@ -26,7 +35,6 @@ sudo -u munge munged -f --key-file=/etc/slurm-llnl/munge.key
 read -r CTRLR < /etc/JARVICE/nodes
 sudo sed -i "s/ControlMachine=.*/ControlMachine=${CTRLR}/" /etc/slurm-llnl/slurm.conf
 
-dir=$(mktemp -d --tmpdir=/data)
 echo $dir | sudo tee /etc/slurm-llnl/slurm-configpath
 echo "slurm dir: $dir"
 cp -r /etc/slurm-llnl/* ${dir}
