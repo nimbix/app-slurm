@@ -28,6 +28,39 @@ for q in $(echo $config | jq -r keys[]); do
 #        echo "127.0.0.1 jarvice-${name}1" | sudo tee /etc/hosts
 done
 
+dns_corefile=$(cat <<EOF
+. {
+    forward . /etc/resolv.conf
+    log
+    errors
+}
+auto jarvice.slurm {
+    file /root/slurm.db
+    log
+    errors
+    reload 15s
+}
+EOF
+)
+
+dns_slurm=$(cat <<EOF
+jarvice.slurm.      IN  SOA dns.jarvice.slurm. admin.jarvice.slurm. $(date +"%Y%m%M%S") 7200 3600 1209600 3600
+dns.jarvice.slurm.  IN  A  $(cat /etc/hosts | grep $(hostname) | awk '{print $1}')
+EOF
+)
+
+printf "$dns_corefile\n" | sudo tee /root/Corefile
+printf "$dns_slurm\n" | sudo tee /root/slurm.db
+
+wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz.sha256
+wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz
+sha256sum coredns_1.8.3_linux_amd64.tgz.sha256
+tar -xf coredns_1.8.3_linux_amd64.tgz
+sudo mv coredns /usr/local/bin/coredns
+rm coredns_1.8.3_linux_amd64.tgz*
+
+sudo coredns -conf /root/Corefile &
+
 sudo dd if=/dev/urandom bs=1 count=1024 of=/etc/slurm-llnl/munge.key &> /dev/null
 sudo mkdir -p /var/run/munge && sudo chown -R munge:munge /var/run/munge
 sudo -u munge munged -f --key-file=/etc/slurm-llnl/munge.key

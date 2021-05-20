@@ -16,6 +16,7 @@ for group in $(echo $1 | sed -r 's/(.*[a-zA-z]+)([0-9]+)$/[\2]/' \
         number=$(cat /etc/slurm-llnl/jxe-$nodeName)
         sudo rm /etc/slurm-llnl/jxe-$nodeName
         cat /etc/hosts | sed "/.*$nodeName/d" | sudo tee /etc/hosts
+        cat /root/slurm.db | sed "/.*$nodeName.*/d" | sudo tee /root/slurm.db
         curl --data-urlencode "username=$APIUSER" \
             --data-urlencode "apikey=$APIKEY" \
             --data-urlencode "number=$number" \
