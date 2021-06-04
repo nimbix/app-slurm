@@ -25,7 +25,6 @@ for q in $(echo $config | jq -r keys[]); do
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/nodes.conf
         echo "PartitionName=${name} Default=no Nodes=jarvice-${name}[1-${size}] DefaultTime=INFINITE State=UP" | \
                 sudo tee --append /etc/slurm-llnl/slurm.conf.d/partitions.conf
-#        echo "127.0.0.1 jarvice-${name}1" | sudo tee /etc/hosts
 done
 
 dns_corefile=$(cat <<EOF

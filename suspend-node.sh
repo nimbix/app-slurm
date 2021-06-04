@@ -8,6 +8,9 @@ for group in $(echo $1 | sed -r 's/(.*[a-zA-z]+)([0-9]+)$/[\2]/' \
     loopSeq=$(seq $(cut -d'-' -f1 <<<$myRange) $(cut -d'-' -f2 <<<$myRange))
     for index in $loopSeq; do
         nodeName="jarvice-$queue$index"
+        if [ ! -f "/etc/slurm-llnl/jxe-$nodeName" ]; then
+            continue
+        fi
         number=$(cat /etc/slurm-llnl/jxe-$nodeName)
         groupNames=$(cat /etc/slurm-llnl/$number)
         for node in $groupNames; do
