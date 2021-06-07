@@ -43,6 +43,17 @@ else
     echo \$(cat /etc/issue) not supported
     exit 1
 fi
+epilogscript=\$(cat << 'EPI'
+#!/bin/bash
+# Failure forces nodes offline after each job
+exit 1
+# sudo scontrol update nodename=\$SLURMD_NODENAME state="drain" reason="JXE eviction"
+# sudo scontrol update nodename=\$SLURMD_NODENAME state="resume"
+EPI
+)
+IFS=
+echo \$epilogscript | sudo tee /usr/bin/epilog.sh
+sudo chmod 755 /usr/bin/epilog.sh
 sudo mkdir -p \$SLURMDIR
 node_rank=\$(cat /etc/JARVICE/nodes | grep -n \$(hostname) | \
     sed -r 's/([0-9]+):.*$/\1/')
