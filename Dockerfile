@@ -18,6 +18,7 @@ RUN printf '%s\n' \
 COPY start-slurm.sh /etc/slurm-llnl/start-slurm.sh
 COPY suspend-node.sh /etc/slurm-llnl/suspend-node.sh
 COPY resume-node.sh /etc/slurm-llnl/resume-node.sh
+COPY resume-group.sh /etc/slurm-llnl/resume-group.sh
 
 COPY AppDef.json /etc/NAE/AppDef.json
 RUN curl --fail -X POST -d @/etc/NAE/AppDef.json https://cloud.nimbix.net/api/jarvice/validate

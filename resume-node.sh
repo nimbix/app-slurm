@@ -4,9 +4,22 @@ SLURM_YUMDIR="/data/slurm-rpms/slurm-19.05.5/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat /etc/slurm-llnl/partitions.json)
 slurm_config=$(cat /etc/slurm-llnl/slurm-configpath)
+sleep 5
+jxe_jobs=$(curl --data-urlencode "username=$APIUSER" \
+    --data-urlencode "apikey=$APIKEY" \
+    "$APIURL""jarvice/jobs")
+exec 100>/var/tmp/jxe.lock
+flock -w 120 100
+
 # Check if range of nodes is specified
 for group in $(echo $1 | sed -r 's/(.*[a-zA-Z]+)([0-9]+)$/[\2]/' \
     | awk -F'[][]' '{print $2}' | tr "," "\n"); do
+    jxe_index=$(echo $jxe_jobs | jq 'map(.job_label == '\"jarvice-$queue[$group]\"') | index(true)')
+    jxe_number=$(echo $jxe_jobs | jq -r 'keys['"$jxe_index"']')
+    if [ "$jxe_number" -gt "0" ]; then
+        continue
+    fi
+    echo $group does not exits
     myRange=$group
     loopSeq=$(seq $(cut -d'-' -f1 <<<$myRange) $(cut -d'-' -f2 <<<$myRange))
     nodeCount=$(echo $loopSeq | wc -w)
@@ -109,6 +122,7 @@ jxe_job=$(cat << EOF
     "readonly": false,
     "force": false
   },
+  "job_label": "jarvice-$queue[$group]",
   "user": {
     "username": "$APIUSER",
     "apikey": "$APIKEY"
