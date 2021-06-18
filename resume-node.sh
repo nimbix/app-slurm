@@ -1,25 +1,20 @@
 #!/bin/bash
 source /etc/JARVICE/jobenv.sh
+OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
+OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)
+if [ "$OS_ID" = "debian" ]; then
+    SLURM_INSTALL="/etc/slurm-llnl"
+else
+    SLURM_INSTALL="/etc/slurm"
+fi
 SLURM_YUMDIR="/data/slurm-rpms/slurm-19.05.5/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
-queue_config=$(cat /etc/slurm-llnl/partitions.json)
-slurm_config=$(cat /etc/slurm-llnl/slurm-configpath)
-sleep 5
-jxe_jobs=$(curl --data-urlencode "username=$APIUSER" \
-    --data-urlencode "apikey=$APIKEY" \
-    "$APIURL""jarvice/jobs")
-exec 100>/var/tmp/jxe.lock
-flock -w 120 100
+queue_config=$(cat $SLURM_INSTALL/partitions.json)
+slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
 
 # Check if range of nodes is specified
 for group in $(echo $1 | sed -r 's/(.*[a-zA-Z]+)([0-9]+)$/[\2]/' \
     | awk -F'[][]' '{print $2}' | tr "," "\n"); do
-    jxe_index=$(echo $jxe_jobs | jq 'map(.job_label == '\"jarvice-$queue[$group]\"') | index(true)')
-    jxe_number=$(echo $jxe_jobs | jq -r 'keys['"$jxe_index"']')
-    if [ "$jxe_number" -gt "0" ]; then
-        continue
-    fi
-    echo $group does not exits
     myRange=$group
     loopSeq=$(seq $(cut -d'-' -f1 <<<$myRange) $(cut -d'-' -f2 <<<$myRange))
     nodeCount=$(echo $loopSeq | wc -w)
@@ -39,11 +34,13 @@ if [ "\$1" != "worker" ]; then
         fi
     done < /etc/JARVICE/nodes
 fi
-if [ \$(which apt) ]; then
+OS_ID=\$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
+OS_ID=\$(echo \$OS_ID | grep -o debian || echo \$OS_ID | grep -o fedora)
+if [ "\$OS_ID" = "debian" ]; then
     SLURMDIR=/etc/slurm-llnl
     DEBIAN_FRONTEND=noninteractive sudo apt update && \
     DEBIAN_FRONTEND=noninteractive sudo apt install -yq slurmd
-elif [ \$(which yum) ]; then
+elif [ "\$OS_ID" = "fedora" ]; then
     SLURMDIR=/etc/slurm
     cd $SLURM_YUMDIR
     sudo yum install -y slurm-19.05.5-1.el7.x86_64.rpm \
@@ -56,12 +53,14 @@ else
     echo \$(cat /etc/issue) not supported
     exit 1
 fi
-epilogscript=\$(cat << 'EPI'
+SLURM_JOBID='\$SLURM_JOBID'
+SLURMD_NODENAME='\$SLURMD_NODENAME'
+epilogscript=\$(cat << EPI
 #!/bin/bash
-# Failure forces nodes offline after each job
-exit 1
-# sudo scontrol update nodename=\$SLURMD_NODENAME state="drain" reason="JXE eviction"
-# sudo scontrol update nodename=\$SLURMD_NODENAME state="resume"
+if ! grep -Fxq "\$SLURM_JOBID" $slurm_config/job_complete; then
+    echo \$SLURM_JOBID >> "$slurm_config/job_complete"
+fi
+sudo scontrol update nodename=\$SLURMD_NODENAME state="down" reason="JXE_Eviction"
 EPI
 )
 IFS=
@@ -136,14 +135,14 @@ EOF
     done
     resp=$(echo $jxe_job | curl --fail -X POST \
         -H "Content-Type: application/json" \
-        --data-binary @- "$APIURL"jarvice/submit || exit 1)
+        --data-binary @- "$APIURL"jarvice/submit 2> /dev/null || exit 1)
     number=$(echo $resp | jq -r .number)
     while true; do
-        sleep 15
+        sleep 1
         job_status=$(curl --data-urlencode "username=$APIUSER" \
             --data-urlencode "apikey=$APIKEY" \
             --data-urlencode "number=$number" \
-            "$APIURL""jarvice/status")
+            "$APIURL""jarvice/status" 2> /dev/null)
         index=$( printf '%d' $number )
         job_status=$(echo $job_status | jq -r .[\"$index\"].job_status)
         echo $job_status
@@ -160,18 +159,17 @@ EOF
                 echo "worker ready"
                 break
             fi
-            sleep 5
+            sleep 1
         done
-        echo $number | sudo tee /etc/slurm-llnl/jxe-$myNodeName
-        echo $myNodeName | sudo tee --append /etc/slurm-llnl/$number
+        echo $number | sudo tee $SLURM_INSTALL/jxe-$myNodeName
+        echo $myNodeName | sudo tee --append $SLURM_INSTALL/$number
         slurm_worker_config=$(cat $slurm_config/$myNodeName)
         echo $slurm_worker_config | sudo tee --append /etc/hosts
         worker_ip=$(echo $slurm_worker_config | awk '{print $1}')
         echo "$myNodeName.jarvice.slurm.  IN   A   $worker_ip" | \
             sudo tee --append /root/slurm.db
         soa_update=$(sudo awk 'NR==1{$6='"$(date +\"%Y%m%M%S\")"'; print}' /root/slurm.db)
-        sudo cat /root/slurm.db | sed "1s/.*/$soa_update/" | \
-            sudo tee /root/slurm.db
+        sudo sed -i "1s/.*/$soa_update/" /root/slurm.db
         sudo scontrol update nodename=$myNodeName nodeaddr=$worker_ip \
             nodehostname=$myNodeName
     done
