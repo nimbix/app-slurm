@@ -24,28 +24,37 @@
             "description": "Launch a session with all boot services, including SSH (if installed).  Connection address and credentials will appear in your web browser once available.",
             "interactive": true,
             "name": "Server",
-            "parameters": {},
-            "path": "/sbin/init"
-        },
-        "Worker": {
-            "path": "/etc/slurm-llnl/start-worker.sh",
-            "interactive": false,
-            "name": "Worker",
-            "description": "Start worker nodes",
             "parameters": {
-                "CONFIG": {
-                    "name": "Config path",
+                "APIKEY": {
+                    "name": "API key",
                     "required": true,
-                    "type": "STR",
-                    "positional": true
+                    "type": "CONST",
+                    "value": "%APIKEY%",
+                    "variable": true
                 },
-                "NODENAME": {
-                    "name": "Worker node name",
+                "APIURL": {
+                    "name": "API URL",
                     "required": true,
-                    "type": "STR",
-                    "positional": true
+                    "type": "CONST",
+                    "value": "%APIURL%",
+                    "variable": true
+                },
+                "APIUSER": {
+                    "name": "API username",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIUSER%",
+                    "variable": true
+                },
+                "JARVICE_VAULT_NAME": {
+                    "name": "Vault name",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%VNAME%",
+                    "variable": true
                 }
-            }
+            },
+            "path": "/sbin/init"
         },
         "Cluster": {
             "path": "/etc/slurm-llnl/start-slurm.sh",
