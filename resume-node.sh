@@ -93,6 +93,7 @@ sudo mkdir -p /var/log/slurm
 sudo slurmd -b -D
 EOF
 )
+IFS=
 jxe_job=$(cat << EOF
 {
   "app": "$(echo $queue_config | jq -r .$queue.app)",
