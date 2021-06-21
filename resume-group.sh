@@ -19,5 +19,5 @@ squeue | grep CF | while read -r line; do
         continue
     fi
     echo $job >> $JOBFILE
-    /etc/slurm-llnl/resume-node.sh $req &
+    $SLURM_INSTALL/resume-node.sh $req &
 done
