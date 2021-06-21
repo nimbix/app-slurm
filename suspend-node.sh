@@ -14,7 +14,7 @@ slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
 #    sed -i "/$job/d" $SLURM_INSTALL/jobs.list
 #done < $slurm_config/job_complete
 # Check if range of nodes is specified
-for group in $(echo $1 | sed -r 's/(.*[a-zA-z]+)([0-9]+)$/[\2]/' \
+for group in $(echo $1 | sed -r 's/(.*[a-zA-Z]+)([0-9]+)$/[\2]/' \
     | awk -F'[][]' '{print $2}' | tr "," "\n"); do
     myRange=$group
     loopSeq=$(seq $(cut -d'-' -f1 <<<$myRange) $(cut -d'-' -f2 <<<$myRange))
