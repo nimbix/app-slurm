@@ -70,7 +70,7 @@ tar -xf coredns_1.8.3_linux_amd64.tgz
 sudo mv coredns /usr/local/bin/coredns
 rm coredns_1.8.3_linux_amd64.tgz*
 
-sudo -E coredns -conf /root/Corefile &
+sudo /usr/local/bin/coredns -conf /root/Corefile &
 
 sudo dd if=/dev/urandom bs=1 count=1024 of=$SLURM_INSTALL/munge.key &> /dev/null
 sudo mkdir -p /var/run/munge && sudo chown -R munge:munge /var/run/munge
