@@ -130,10 +130,10 @@ jxe_job=$(cat << EOF
 }
 EOF
 )
-    for nodeIndex in $loopSeq; do
+    while IFS= read -r nodeIndex; do
         myNodeName="jarvice-$queue$nodeIndex"
         rm -f $slurm_config/jxe-$myNodeName $slurm_config/$myNodeName
-    done
+    done <<< "$loopSeq"
     resp=$(echo $jxe_job | curl --fail -X POST \
         -H "Content-Type: application/json" \
         --data-binary @- "$APIURL"jarvice/submit 2> /dev/null || exit 1)
@@ -152,9 +152,8 @@ EOF
             break
         fi
     done
-    for nodeIndex in $loopSeq; do
+    while IFS= read -r nodeIndex; do
         myNodeName="jarvice-$queue$nodeIndex"
-        touch $slurm_config/jxe-$myNodeName
         while true; do
             if [ -f "$slurm_config/$myNodeName" ]; then
                 echo "worker ready"
@@ -173,5 +172,6 @@ EOF
         sudo sed -i "1s/.*/$soa_update/" /root/slurm.db
         sudo scontrol update nodename=$myNodeName nodeaddr=$worker_ip \
             nodehostname=$myNodeName
-    done
+        touch $slurm_config/jxe-$myNodeName
+    done <<< "$loopSeq"
 done
