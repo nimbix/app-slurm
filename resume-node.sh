@@ -7,7 +7,7 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_INSTALL="/etc/slurm"
 fi
-SLURM_YUMDIR="/data/slurm-rpms/slurm-19.05.5/x86_64"
+SLURM_YUMDIR="/usr/lib/slurm/slurm-19.05.5/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat $SLURM_INSTALL/partitions.json)
 slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
@@ -38,17 +38,25 @@ OS_ID=\$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID
 OS_ID=\$(echo \$OS_ID | grep -o debian || echo \$OS_ID | grep -o fedora)
 if [ "\$OS_ID" = "debian" ]; then
     SLURMDIR=/etc/slurm-llnl
-    DEBIAN_FRONTEND=noninteractive sudo apt update && \
-    DEBIAN_FRONTEND=noninteractive sudo apt install -yq slurmd
+    if command -v slurmd &> /dev/null; then
+        echo "skipping slurm installation"
+    else
+        DEBIAN_FRONTEND=noninteractive sudo apt update
+        DEBIAN_FRONTEND=noninteractive sudo apt install -yq slurmd
+    fi
 elif [ "\$OS_ID" = "fedora" ]; then
     SLURMDIR=/etc/slurm
+    if command -v slurmd &> /dev/null; then
+        echo "skipping slurm installation"
+    else
     cd $SLURM_YUMDIR
-    sudo yum install -y slurm-19.05.5-1.el7.x86_64.rpm \
-        slurm-perlapi-19.05.5-1.el7.x86_64.rpm \
-        slurm-slurmd-19.05.5-1.el7.x86_64.rpm \
-        mariadb-libs-5.5.68-1.el7.x86_64.rpm \
-        munge-0.5.11-3.el7.x86_64.rpm \
-        munge-libs-0.5.11-3.el7.x86_64.rpm rrdtool-1.4.8-9.el7.x86_64.rpm
+        sudo yum install -y slurm-19.05.5-1.el7.x86_64.rpm \
+            slurm-perlapi-19.05.5-1.el7.x86_64.rpm \
+            slurm-slurmd-19.05.5-1.el7.x86_64.rpm \
+            mariadb-libs-5.5.68-1.el7.x86_64.rpm \
+            munge-0.5.11-3.el7.x86_64.rpm \
+            munge-libs-0.5.11-3.el7.x86_64.rpm rrdtool-1.4.8-9.el7.x86_64.rpm
+   fi
 else
     echo \$(cat /etc/issue) not supported
     exit 1
@@ -67,11 +75,12 @@ IFS=
 echo \$epilogscript | sudo tee /usr/bin/epilog.sh
 sudo chmod 755 /usr/bin/epilog.sh
 sudo mkdir -p \$SLURMDIR
+sudo chown -R \$USER:\${USER} \$SLURMDIR
 node_rank=\$(cat /etc/JARVICE/nodes | grep -n \$(hostname) | \
     sed -r 's/([0-9]+):.*$/\1/')
 node_rank=\$(( \$node_rank + $indexStart - 1 ))
 worker_name="jarvice-$queue\$node_rank"
-sudo cp -r ${slurm_config}/* \$SLURMDIR
+cp -r ${slurm_config}/* \$SLURMDIR
 cat \$SLURMDIR/slurm-headnode | sudo tee --append /etc/hosts
 node=\$(hostname)
 cat /etc/hosts | sed "/.*\${node}/s/$/ \${worker_name}/" | sudo tee /etc/hosts
@@ -90,7 +99,10 @@ sudo -u munge munged -f --key-file=\$SLURMDIR/munge.key
 sudo mkdir -p /var/spool/slurmd
 sudo mkdir -p /var/run/slurmd
 sudo mkdir -p /var/log/slurm
-sudo slurmd -b -D
+sudo chown -R \$USER:\$USER /var/spool/slurmd
+sudo chown -R \$USER:\$USER /var/run/slurmd
+sudo chown -R \$USER:\$USER /var/log/slurm
+slurmd -b -D
 EOF
 )
 IFS=

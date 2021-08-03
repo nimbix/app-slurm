@@ -78,10 +78,12 @@ sudo -u munge munged -f --key-file=$SLURM_INSTALL/munge.key
 
 read -r CTRLR < /etc/JARVICE/nodes
 sudo sed -i "s/ControlMachine=.*/ControlMachine=${CTRLR}/" $SLURM_INSTALL/slurm.conf
+sudo sed -i "s/JARVICE_USER/${USER}/" $SLURM_INSTALL/slurm.conf
 
 echo $dir | sudo tee $SLURM_INSTALL/slurm-configpath
 echo "slurm dir: $dir"
-sudo cp -r $SLURM_INSTALL/* ${dir}
+sudo chmod -R 755 ${SLURM_INSTALL}
+cp -r $SLURM_INSTALL/* ${dir}
 cat /etc/hosts | grep $(hostname) > ${dir}/slurm-headnode
 
 sudo mkdir -p /var/run/slurmd
