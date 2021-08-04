@@ -11,7 +11,7 @@ queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat $SLURM_INSTALL/partitions.json)
 slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
 #while IFS= read -r job; do
-#    sed -i "/$job/d" $SLURM_INSTALL/jobs.list
+#    sed -i "/$job/d" /tmp/jobs.list
 #done < $slurm_config/job_complete
 # Check if range of nodes is specified
 for group in $(echo $1 | sed -r 's/(.*[a-zA-Z]+)([0-9]+)$/[\2]/' \

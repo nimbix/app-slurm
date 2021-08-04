@@ -6,7 +6,7 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_INSTALL="/etc/slurm"
 fi
-JOBFILE="$SLURM_INSTALL/jobs.list"
+JOBFILE="/tmp/jobs.list"
 touch "$JOBFILE"
 IFS=
 exec 100>/var/tmp/jxe.lock

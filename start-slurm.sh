@@ -63,6 +63,7 @@ EOF
 printf "$dns_corefile\n" | sudo tee /root/Corefile
 printf "$dns_slurm\n" | sudo tee /root/slurm.db
 
+cd /tmp
 wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz.sha256
 wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz
 sha256sum coredns_1.8.3_linux_amd64.tgz.sha256
@@ -88,6 +89,10 @@ cat /etc/hosts | grep $(hostname) > ${dir}/slurm-headnode
 
 sudo mkdir -p /var/run/slurmd
 sudo mkdir -p /var/lib/slurmd
+sudo mkdir -p /var/log/slurm
+sudo chown -R $USER:$USER /var/run/slurmd
+sudo chown -R $USER:$USER /var/lib/slurmd
+sudo chown -R $USER:$USER /var/log/slurm
 
-sudo slurmctld -D
+slurmctld -D
 
