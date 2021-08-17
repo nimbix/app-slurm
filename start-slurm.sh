@@ -1,4 +1,10 @@
 #!/bin/bash
+JARVICE_ID_USER=$USER
+if [ -f /var/run/jxe-slurm.pid ]; then
+    exit 0
+else
+    echo $$ > /var/run/jxe-slurm.pid
+fi
 set -e
 OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
 OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)
@@ -9,10 +15,12 @@ else
 fi
 
 dir=$(mktemp -d --tmpdir=/data)
+chown -R $JARVICE_ID_USER:$JARVICE_ID_USER $dir
 
 function cleanup()
 {
     sudo rm -rf $dir
+    sudo rm /var/run/jxe-slurm.pid
 }
 
 trap cleanup EXIT
@@ -63,14 +71,6 @@ EOF
 printf "$dns_corefile\n" | sudo tee /root/Corefile
 printf "$dns_slurm\n" | sudo tee /root/slurm.db
 
-cd /tmp
-wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz.sha256
-wget https://github.com/coredns/coredns/releases/download/v1.8.3/coredns_1.8.3_linux_amd64.tgz
-sha256sum coredns_1.8.3_linux_amd64.tgz.sha256
-tar -xf coredns_1.8.3_linux_amd64.tgz
-sudo mv coredns /usr/local/bin/coredns
-rm coredns_1.8.3_linux_amd64.tgz*
-
 sudo /usr/local/bin/coredns -conf /root/Corefile &
 
 sudo dd if=/dev/urandom bs=1 count=1024 of=$SLURM_INSTALL/munge.key &> /dev/null
@@ -79,7 +79,7 @@ sudo -u munge munged -f --key-file=$SLURM_INSTALL/munge.key
 
 read -r CTRLR < /etc/JARVICE/nodes
 sudo sed -i "s/ControlMachine=.*/ControlMachine=${CTRLR}/" $SLURM_INSTALL/slurm.conf
-sudo sed -i "s/JARVICE_USER/${USER}/" $SLURM_INSTALL/slurm.conf
+sudo sed -i "s/JARVICE_USER/${JARVICE_ID_USER}/" $SLURM_INSTALL/slurm.conf
 
 echo $dir | sudo tee $SLURM_INSTALL/slurm-configpath
 echo "slurm dir: $dir"
@@ -90,9 +90,9 @@ cat /etc/hosts | grep $(hostname) > ${dir}/slurm-headnode
 sudo mkdir -p /var/run/slurmd
 sudo mkdir -p /var/lib/slurmd
 sudo mkdir -p /var/log/slurm
-sudo chown -R $USER:$USER /var/run/slurmd
-sudo chown -R $USER:$USER /var/lib/slurmd
-sudo chown -R $USER:$USER /var/log/slurm
+sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/run/slurmd
+sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/lib/slurmd
+sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/log/slurm
 
 slurmctld -D
 
