@@ -7,7 +7,7 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_INSTALL="/etc/slurm"
 fi
-SLURM_YUMDIR="/usr/lib/slurm/slurm-19.05.5/x86_64"
+SLURM_YUMDIR="/usr/lib/slurm/slurm-SLURM_VERSION/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat $SLURM_INSTALL/partitions.json)
 slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
@@ -50,13 +50,8 @@ elif [ "\$OS_ID" = "fedora" ]; then
         echo "skipping slurm installation"
     else
     cd $SLURM_YUMDIR
-        sudo yum install -y slurm-19.05.5-1.el7.x86_64.rpm \
-            slurm-perlapi-19.05.5-1.el7.x86_64.rpm \
-            slurm-slurmd-19.05.5-1.el7.x86_64.rpm \
-            mariadb-libs-5.5.68-1.el7.x86_64.rpm \
-            munge-0.5.11-3.el7.x86_64.rpm \
-            munge-libs-0.5.11-3.el7.x86_64.rpm rrdtool-1.4.8-9.el7.x86_64.rpm
-   fi
+        sudo yum install -y *.rpm
+    fi
 else
     echo \$(cat /etc/issue) not supported
     exit 1
