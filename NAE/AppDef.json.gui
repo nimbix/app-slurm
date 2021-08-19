@@ -20,11 +20,18 @@
         "OBJECT"
     ],
     "commands": {
-        "Server": {
-            "description": "Launch a session with all boot services, including SSH (if installed).  Connection address and credentials will appear in your web browser once available.",
+        "xclock": {
+            "description": "xclock example",
             "interactive": true,
-            "name": "Server",
+            "name": "xclock",
             "parameters": {
+		"command": {
+          	    "name": "command",
+                    "positional": true,
+                    "required": true,
+                    "type": "CONST",
+                    "value": "/usr/lib/jarvice.apps/slurm/slurm.sh"
+		},
                 "APIKEY": {
                     "name": "API key",
                     "required": true,
@@ -54,7 +61,7 @@
                     "variable": true
                 }
             },
-            "path": "/sbin/init"
+            "path": "/usr/local/bin/nimbix_desktop"
         }
     },
     "image": {

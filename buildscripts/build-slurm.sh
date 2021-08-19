@@ -2,6 +2,11 @@
 set -e
 set -x
 
+[[ -z "$TMPDIR" ]] && TMPDIR=/tmp
+GIT_VERSION="${SLURM_VERSION//./-}-1"
+WORK=$TMPDIR/install/slurm-${SLURM_VERSION}
+mkdir -p ${WORK}
+
 OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
 OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)
 if [ "$OS_ID" = "debian" ]; then
@@ -9,10 +14,6 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_VERSION=${SLURM_VERSION:-19.05.5}
 
-    [[ -z "$TMPDIR" ]] && TMPDIR=/tmp
-    GIT_VERSION="${SLURM_VERSION//./-}-1"
-    WORK=$TMPDIR/install/slurm-${SLURM_VERSION}
-    mkdir -p ${WORK}
     cd ${WORK}
 
     TAR_ARCHIVE="slurm-${GIT_VERSION}.tar.gz"

@@ -18,7 +18,7 @@ RUN /usr/local/bin/install-coredns.sh "${COREDNS_VERSION}"
 
 ############ main app #############
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-centos:7.5.1804}
+FROM ${BASE_IMAGE:-gcr.io/jarvice-apps/centos-desktop-realvnc:7}
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
@@ -43,7 +43,6 @@ echo \$prologscript | sudo tee /usr/bin/prolog.sh\n\
 sudo chmod 755 /usr/bin/prolog.sh\n'\
 | sed -i '/^epilogscript=.*/e cat \/dev\/stdin' /tmp/resume-node.sh
 RUN sed -i 's/#Prolog=/Prolog=\/usr\/bin\/prolog.sh/' /tmp/slurm.conf
-RUN echo '/usr/lib/jarvice.slurm/scripts/start-slurm.sh &> /dev/null &' >> /etc/profile
 # install dependencies
 COPY ${SLURM_WORKDIR:-.}/buildscripts/install-dependencies.sh /usr/local/bin/install-dependencies.sh
 RUN  /usr/local/bin/install-dependencies.sh
@@ -58,8 +57,10 @@ COPY --from=getter /usr/local/bin/coredns /usr/local/bin/coredns
 RUN mkdir -p /var/log/munge && chown -R munge:munge /var/log/munge && \
     mkdir -p /var/log/slurm
 # setup AppDef
+ARG SLURM_SCRIPT
 ARG APPDEF
-COPY ${APPDEF:-${SLURM_WORKDIR:-.}/NAE/AppDef.json} /etc/NAE/AppDef.json
+COPY ${SLURM_SCRIPT:-${SLURM_WORKDIR:-.}/scripts/slurm.sh} /usr/lib/jarvice.apps/slurm/slurm.sh
+COPY ${APPDEF:-${SLURM_WORKDIR:-.}/NAE/AppDef.json.gui} /etc/NAE/AppDef.json
 RUN curl --fail -X POST -d @/etc/NAE/AppDef.json https://cloud.nimbix.net/api/jarvice/validate
 
 RUN bash -c 'mkdir -p /etc/NAE && touch /etc/NAE/{screenshot.png,screenshot.txt,license.txt,AppDef.json}'
