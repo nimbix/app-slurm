@@ -20,26 +20,27 @@ docker build -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-co
 
 ### Prerequisites
 
-####Supported O/S
+#### Supported O/S
 
 * CentOS 7+
 * Ubuntu Bionic 18.04+
 
-####JarviceXE Vault
+#### JarviceXE Vault
 
 The same vault must be accessible to all jobs. Ephemeral vaults are not supported
 
-### Docker Build Arguments
+### Docker Build Arguments (--build-arg)
 
-* BASE_IMAGE: container to use for add on; default centos:7.5.1804
-* SLURM_VERSION: (CentOS only) Slurm version to install; default 19.05.5
-* COREDNS_VERSION: CoreDNS version to install; default 1.8.3
-* SLURM_WORKDIR: location of ‘app-slurm’ repository; default . (current working directory)
+* BASE_IMAGE: container to use for add on; default `centos:7.5.1804`
+* SLURM_VERSION: (CentOS only) Slurm version to install; default `19.05.5`
+* COREDNS_VERSION: CoreDNS version to install; default `1.8.3`
+* SLURM_WORKDIR: location of ‘app-slurm’ repository; default `.` (current working directory)
 
 ## Known Issues
 
 * Slurm version must be the same between slurmctld and worker nodes (slurmd)
 * A temporary working directory is created in a user’s vault (i.e. /data/tmp.XXXX) to store Slurm configuration files which are removed when the main JarviceXE job exits. This cleanup is a best effort and fails when a job is terminated outside of JARVICE Shutdown/Terminate requests.
+* Docker build may use cache layer when changing BASE_IMAGE build argument. Use `--no-cache` flag to force a rebuild.
 
 ## Authors
 
