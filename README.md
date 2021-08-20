@@ -38,7 +38,8 @@ The same vault must be accessible to all jobs. Ephemeral vaults are not supporte
 
 ## Known Issues
 
-* Slurm version must be the same between slurmctld and worker nodes (slurmd)
+* Slurm version must be the same between slurmctld and worker nodes (slurmd).
+* All slurm nodes must be in the same JARVICE downstream cluster.
 * A temporary working directory is created in a user’s vault (i.e. /data/tmp.XXXX) to store Slurm configuration files which are removed when the main JarviceXE job exits. This cleanup is a best effort and fails when a job is terminated outside of JARVICE Shutdown/Terminate requests.
 * Docker build may use cache layer when changing BASE_IMAGE build argument. Use `--no-cache` flag to force a rebuild.
 
