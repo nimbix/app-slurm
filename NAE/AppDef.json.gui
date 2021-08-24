@@ -1,0 +1,71 @@
+{
+    "name": "Slurm",
+    "description": "Slurm",
+    "author": "Nimbix, Inc.",
+    "licensed": true,
+    "classifications": [
+        "System",
+        "Software Development/Software Testing"
+    ],
+    "machines": [
+        "n[0-9]*",
+        "n[1-9][0-9]*",
+        "ng[2-9]*",
+        "ngd[3-9]*"
+    ],
+    "vault-types": [
+        "FILE",
+        "BLOCK",
+        "BLOCK_ARRAY",
+        "OBJECT"
+    ],
+    "commands": {
+        "xclock": {
+            "description": "xclock example",
+            "interactive": true,
+            "name": "xclock",
+            "parameters": {
+		"command": {
+          	    "name": "command",
+                    "positional": true,
+                    "required": true,
+                    "type": "CONST",
+                    "value": "/usr/lib/jarvice.apps/slurm/slurm.sh"
+		},
+                "APIKEY": {
+                    "name": "API key",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIKEY%",
+                    "variable": true
+                },
+                "APIURL": {
+                    "name": "API URL",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIURL%",
+                    "variable": true
+                },
+                "APIUSER": {
+                    "name": "API username",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIUSER%",
+                    "variable": true
+                },
+                "JARVICE_VAULT_NAME": {
+                    "name": "Vault name",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%VNAME%",
+                    "variable": true
+                }
+            },
+            "path": "/usr/local/bin/nimbix_desktop"
+        }
+    },
+    "image": {
+        "type": "image/jpeg",
+        "data": ""
+    }
+}

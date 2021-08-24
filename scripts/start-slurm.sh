@@ -23,7 +23,7 @@ function cleanup()
     sudo rm /var/run/jxe-slurm.pid
 }
 
-trap cleanup EXIT
+trap cleanup SIGINT SIGTERM ERR EXIT
 
 source /etc/JARVICE/jobenv.sh
 curl "$APIURL""jarvice/queues?username=$APIUSER&apikey=$APIKEY&info=true" | \

@@ -1,11 +1,5 @@
 #!/bin/bash
-OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
-OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)
-if [ "$OS_ID" = "debian" ]; then
-    SLURM_INSTALL="/etc/slurm-llnl"
-else
-    SLURM_INSTALL="/etc/slurm"
-fi
+SLURM_PLUGIN_INSTALL="/usr/lib/jarvice.slurm"
 JOBFILE="/tmp/jobs.list"
 touch "$JOBFILE"
 IFS=
@@ -19,5 +13,5 @@ squeue | grep CF | while read -r line; do
         continue
     fi
     echo $job >> $JOBFILE
-    $SLURM_INSTALL/resume-node.sh $req &
+    $SLURM_PLUGIN_INSTALL/scripts/resume-node.sh $req &
 done
