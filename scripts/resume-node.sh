@@ -7,7 +7,7 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_INSTALL="/etc/slurm"
 fi
-SLURM_YUMDIR="/usr/lib/slurm/slurm-SLURM_VERSION/x86_64"
+SLURM_YUMDIR="/usr/lib/slurm/slurm-${SLURM_VERSION:-19.05.5}/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat $SLURM_INSTALL/partitions.json)
 slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
