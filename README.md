@@ -22,7 +22,7 @@ docker build -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-co
 
 #### Supported O/S
 
-* CentOS 7+
+* CentOS 7
 * Ubuntu Bionic 18.04+
 
 #### JarviceXE Vault
@@ -35,6 +35,38 @@ The same vault must be accessible to all jobs. Ephemeral vaults are not supporte
 * SLURM_VERSION: (CentOS only) Slurm version to install; default `19.05.5`
 * COREDNS_VERSION: CoreDNS version to install; default `1.8.3`
 * SLURM_WORKDIR: location of ‘app-slurm’ repository; default `.` (current working directory)
+
+### Nimbix Desktop enabled containers
+
+Install add on to Nimbix Desktop enabled containers by building with `Dockerfile.gui`.
+
+```bash
+git clone https://github.com/nimbix/app-slurm
+docker build -f Dockerfile.gui -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-container>" app-slurm/
+```
+
+The above command will create a CentOS application that opens a xclock window.
+
+#### Application customization
+
+Update `scripts/slurm.sh` and `NAE/AppDef.json.gui` to match the requirements of the `BASE_IMAGE` container.
+
+##### slurm.sh
+
+Replace `/usr/bin/xclock` with your application binary or script. Arguments passed in by `AppDef.json` can be accessed with `$@` 
+
+For example: 
+
+```bash
+# start ample application scripts w/ AppDef args
+exec /usr/bin/my-app "$@"
+```
+
+#### AppDef.json.gui
+
+Update the `xclock` command for your application.
+
+**NOTE** The `APIKEY`, `APIURL`, `APIUSER`, and `JARVICE_VAULT_NAME` AppDef parameters are required for the slurm add on to operate correctly
 
 ## Known Issues
 
