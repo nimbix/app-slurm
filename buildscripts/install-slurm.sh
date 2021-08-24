@@ -14,7 +14,7 @@ else
     cd /usr/lib/slurm/slurm-${SLURM_VERSION}
     yum install -y epel-release
     yum -y install jq sudo *.rpm
-    sed -i 's/slurm-llnl/slurm/' /etc/slurm/slurm.conf
+    sed -i 's/slurm-llnl/slurm/' /tmp/slurm.conf
 fi
 mkdir -p "${SLURM_PLUGIN_INSTALL}/scripts"
 # move scripts to slurm installation
