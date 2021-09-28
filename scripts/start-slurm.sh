@@ -73,8 +73,13 @@ printf "$dns_slurm\n" | sudo tee /root/slurm.db
 
 sudo /usr/local/bin/coredns -conf /root/Corefile &
 
-sudo dd if=/dev/urandom bs=1 count=1024 of=$SLURM_INSTALL/munge.key &> /dev/null
 sudo mkdir -p /var/run/munge && sudo chown -R munge:munge /var/run/munge
+if [ -f "/etc/JARVICE/munge.key" ]; then
+    MUNGE_SRC=/opt/JARVICE/munge.key
+else
+    MUNGE_SRC=/dev/urandom
+fi
+sudo dd if=$MUNGE_SRC bs=1 count=1024 of=$SLURM_INSTALL/munge.key &> /dev/null
 sudo -u munge munged -f --key-file=$SLURM_INSTALL/munge.key
 
 read -r CTRLR < /etc/JARVICE/nodes
@@ -93,6 +98,13 @@ sudo mkdir -p /var/log/slurm
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/run/slurmd
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/lib/slurmd
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/log/slurm
+
+# create testuser if provided UID/GID does not exists
+# if [ "$(grep $JARVICE_SLURM_UID:$JARVICE_SLURM_GID /etc/passwd | awk -F ':' '{print $3":"$4}')" != "$JARVICE_SLURM_UID:$JARVICE_SLURM_GID" ]; then
+#     sudo useradd -m $JARVICE_SLURM_USER || true
+#     sudo usermod -u $JARVICE_SLURM_UID $JARVICE_SLURM_USER || true
+#     sudo groupmod -g $JARVICE_SLURM_GID $JARVICE_SLURM_USER || true
+# fi
 
 slurmctld -D
 

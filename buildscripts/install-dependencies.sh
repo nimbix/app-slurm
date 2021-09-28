@@ -2,7 +2,7 @@
 set -e
 set -x
 
-PACKAGES="sudo wget curl"
+PACKAGES="sudo wget curl openssh-server"
 
 OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
 OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)

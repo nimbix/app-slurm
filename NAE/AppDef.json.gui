@@ -1,4 +1,5 @@
 {
+    "enablehpc": true,
     "name": "Slurm",
     "description": "Slurm",
     "author": "Nimbix, Inc.",
@@ -25,13 +26,13 @@
             "interactive": true,
             "name": "xclock",
             "parameters": {
-		"command": {
-          	    "name": "command",
+		        "command": {
+          	        "name": "command",
                     "positional": true,
                     "required": true,
                     "type": "CONST",
                     "value": "/usr/lib/jarvice.apps/slurm/slurm.sh"
-		},
+		        },
                 "APIKEY": {
                     "name": "API key",
                     "required": true,
@@ -59,6 +60,85 @@
                     "type": "CONST",
                     "value": "%VNAME%",
                     "variable": true
+                }
+            },
+            "path": "/usr/local/bin/nimbix_desktop"
+        },
+        "public": {
+            "description": "xclock example w/ ssh server",
+            "interactive": true,
+            "name": "public",
+            "publicip": true,
+            "ports": [
+                "6817/tcp",
+                "22/tcp",
+                "443/tcp"
+            ],
+            "parameters": {
+		        "command": {
+          	        "name": "command",
+                    "positional": true,
+                    "required": true,
+                    "type": "CONST",
+                    "value": "/usr/lib/jarvice.apps/slurm/slurm.sh"
+		        },
+                "APIKEY": {
+                    "name": "API key",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIKEY%",
+                    "variable": true
+                },
+                "APIURL": {
+                    "name": "API URL",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIURL%",
+                    "variable": true
+                },
+                "APIUSER": {
+                    "name": "API username",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%APIUSER%",
+                    "variable": true
+                },
+                "JARVICE_VAULT_NAME": {
+                    "name": "Vault name",
+                    "required": true,
+                    "type": "CONST",
+                    "value": "%VNAME%",
+                    "variable": true
+                },
+                "JARVICE_SLURM_USER": {
+                    "name": "username for temp slurm user",
+                    "required": false,
+                    "type": "STR",
+                    "value": "slurm username",
+                    "variable": true
+                },
+                "JARVICE_SLURM_UID": {
+                    "name": "UID for temp slurm user",
+                    "required": false,
+                    "type": "STR",
+                    "value": "slurm UID",
+                    "variable": true
+                },
+                "JARVICE_SLURM_GID": {
+                    "name": "GID for temp slurm user",
+                    "required": false,
+                    "type": "STR",
+                    "value": "slurm GID",
+                    "variable": true
+                },
+                "mungeUPLOAD": {
+                    "name": "munge key",
+                    "description": "munge key for slurm",
+                    "required": false,
+                    "type": "UPLOAD",
+                    "target": "JARVICE/munge.key",
+                    "filter": "*.key",
+                    "size": 10240
                 }
             },
             "path": "/usr/local/bin/nimbix_desktop"

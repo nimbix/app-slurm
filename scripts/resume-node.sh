@@ -7,7 +7,7 @@ if [ "$OS_ID" = "debian" ]; then
 else
     SLURM_INSTALL="/etc/slurm"
 fi
-SLURM_YUMDIR="/usr/lib/slurm/slurm-${SLURM_VERSION:-19.05.5}/x86_64"
+SLURM_YUMDIR="/usr/lib/slurm/slurm-${SLURM_VERSION}/x86_64"
 queue=$(echo $1 | sed 's/jarvice-//g' | sed 's/[[]*[0-9].*//g')
 queue_config=$(cat $SLURM_INSTALL/partitions.json)
 slurm_config=$(cat $SLURM_INSTALL/slurm-configpath)
@@ -97,7 +97,13 @@ sudo mkdir -p /var/log/slurm
 sudo chown -R \$USER:\$USER /var/spool/slurmd
 sudo chown -R \$USER:\$USER /var/run/slurmd
 sudo chown -R \$USER:\$USER /var/log/slurm
-slurmd -b -D
+# create testuser if provided UID/GID does not exists
+# if [ "\$(grep $JARVICE_SLURM_UID:$JARVICE_SLURM_GID /etc/passwd | awk -F ':' '{print \$3":"\$4}')" != "$JARVICE_SLURM_UID:$JARVICE_SLURM_GID" ]; then
+#     sudo useradd -m $JARVICE_SLURM_USER || true
+#     sudo usermod -u $JARVICE_SLURM_UID $JARVICE_SLURM_USER || true
+#     sudo groupmod -g $JARVICE_SLURM_GID $JARVICE_SLURM_USER || true
+# fi
+sudo slurmd -b -D
 EOF
 )
 IFS=
