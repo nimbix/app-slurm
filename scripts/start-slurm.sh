@@ -14,12 +14,8 @@ else
     SLURM_INSTALL="/etc/slurm"
 fi
 
-dir=$(mktemp -d --tmpdir=/data)
-chown -R $JARVICE_ID_USER:$JARVICE_ID_USER $dir
-
 function cleanup()
 {
-    sudo rm -rf $dir
     sudo rm /var/run/jxe-slurm.pid
 }
 
@@ -86,11 +82,10 @@ read -r CTRLR < /etc/JARVICE/nodes
 sudo sed -i "s/ControlMachine=.*/ControlMachine=${CTRLR}/" $SLURM_INSTALL/slurm.conf
 sudo sed -i "s/JARVICE_USER/${JARVICE_ID_USER}/" $SLURM_INSTALL/slurm.conf
 
-echo $dir | sudo tee $SLURM_INSTALL/slurm-configpath
-echo "slurm dir: $dir"
 sudo chmod -R 755 ${SLURM_INSTALL}
-cp -r $SLURM_INSTALL/* ${dir}
-cat /etc/hosts | grep $(hostname) > ${dir}/slurm-headnode
+
+cat /etc/hosts | grep $(hostname) | sudo tee ${SLURM_INSTALL}/slurm-headnode
+tar -C $SLURM_INSTALL/.. -cvf /tmp/slurm.tar $(basename $SLURM_INSTALL)
 
 sudo mkdir -p /var/run/slurmd
 sudo mkdir -p /var/lib/slurmd
@@ -98,13 +93,6 @@ sudo mkdir -p /var/log/slurm
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/run/slurmd
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/lib/slurmd
 sudo chown -R $JARVICE_ID_USER:$JARVICE_ID_USER /var/log/slurm
-
-# create testuser if provided UID/GID does not exists
-# if [ "$(grep $JARVICE_SLURM_UID:$JARVICE_SLURM_GID /etc/passwd | awk -F ':' '{print $3":"$4}')" != "$JARVICE_SLURM_UID:$JARVICE_SLURM_GID" ]; then
-#     sudo useradd -m $JARVICE_SLURM_USER || true
-#     sudo usermod -u $JARVICE_SLURM_UID $JARVICE_SLURM_USER || true
-#     sudo groupmod -g $JARVICE_SLURM_GID $JARVICE_SLURM_USER || true
-# fi
 
 slurmctld -D
 
