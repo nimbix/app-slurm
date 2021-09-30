@@ -20,7 +20,6 @@ for group in $(echo $1 | sed -r 's/(.*[a-zA-Z]+)([0-9]+)$/[\2]/' \
     nodeCount=$(echo $loopSeq | wc -w)
 
     indexStart=$(echo $loopSeq | awk '{print $1}')
-    mytarball=$(cat /tmp/slurm.tar)
 jobscript=$(cat << EOF
 OS_ID=\$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
 OS_ID=\$(echo \$OS_ID | grep -o debian || echo \$OS_ID | grep -o fedora)
@@ -44,24 +43,32 @@ else
     echo \$(cat /etc/issue) not supported
     exit 1
 fi
-SKIP=\$(awk '/^__TARFILE_FOLLOWS__/ { print NR + 1; exit 0; }' "/opt/JARVICE/jobscript")
-tail -n +\${SKIP} "/opt/JARVICE/jobscript" | tar -pvx -C /tmp
+SKIP=\$(awk '/^__TARFILE_FOLLOWS__/ { print NR + 1; exit 0; }' "\$0")
+tail -n +\${SKIP} "\$0" | tar -pvx -C /tmp
 sudo cp -r /tmp/slurm/* \$SLURMDIR
+cat \$SLURMDIR/slurm-headnode | sudo tee --append /etc/hosts
 
 myHost=\$(hostname)
-while IFS= read -r node; do
-    if [ "\$1" != "worker" ]; then
+if [ "\$1" != "worker" ]; then
+    node_rank=$indexStart
+    while IFS= read -r node; do
+        worker_name="jarvice-$queue\$node_rank"
+        cat /etc/hosts | sed "/.*\${node}/s/$/ \${worker_name}/" | sudo tee /etc/hosts &> /dev/null
+        node_rank=\$(( \$node_rank + 1 ))
+    done < /etc/JARVICE/nodes
+    cat /etc/hosts
+    echo "worker ready"
+    while IFS= read -r node; do
         if [ "\$node" != "\$myHost" ]; then
             echo "Setting up node: \$node"
             while ! 2> /dev/null > /dev/tcp/\$node/22; do
                 sleep 1
             done
             scp /opt/JARVICE/jobscript \$node:/tmp
-            scp -r \$SLURMDIR/* \$node:$slurm_config
             (ssh -n \$node "nohup bash /tmp/jobscript worker &> /dev/null") &
         fi
-    fi
-done < /etc/JARVICE/nodes
+    done < /etc/JARVICE/nodes
+fi
 SLURM_JOBID='\$SLURM_JOBID'
 SLURMD_NODENAME='\$SLURMD_NODENAME'
 epilogscript=\$(cat << EPI
@@ -72,20 +79,14 @@ EPI
 IFS=
 echo \$epilogscript | sudo tee /usr/bin/epilog.sh
 sudo chmod 755 /usr/bin/epilog.sh
-sudo mkdir -p \$SLURMDIR
-sudo chown -R \$USER:\${USER} \$SLURMDIR
+cat /etc/resolv.conf | sed 's/^search/& jarvice.slurm/' | \
+    sed "s/^nameserver.*/nameserver $(cat /etc/hosts | grep $(hostname) | \
+    awk '{print $1}')/" | sudo tee /etc/resolv.conf
 node_rank=\$(cat /etc/JARVICE/nodes | grep -n \$(hostname) | \
     sed -r 's/([0-9]+):.*$/\1/')
 node_rank=\$(( \$node_rank + $indexStart - 1 ))
 worker_name="jarvice-$queue\$node_rank"
-cp -r ${slurm_config}/* \$SLURMDIR
-cat \$SLURMDIR/slurm-headnode | sudo tee --append /etc/hosts
-node=\$(hostname)
-cat /etc/hosts | sed "/.*\${node}/s/$/ \${worker_name}/" | sudo tee /etc/hosts
-cat /etc/hosts | grep \${worker_name} | sudo tee /proc/1/fd/1
-cat /etc/resolv.conf | sed 's/^search/& jarvice.slurm/' | \
-    sed "s/^nameserver.*/nameserver $(cat /etc/hosts | grep $(hostname) | \
-    awk '{print $1}')/" | sudo tee /etc/resolv.conf
+cat /etc/hosts | sed "/.*\$(hostname)/s/$/ \${worker_name}/" | sudo tee /etc/hosts &> /dev/null
 while true; do
     dig \${worker_name}.jarvice.slurm | grep "ANSWER SECTION"
     if [ "$?" -eq "0" ]; then
@@ -99,15 +100,15 @@ sudo -u munge munged -f --key-file=\$SLURMDIR/munge.key
 sudo mkdir -p /var/spool/slurmd
 sudo mkdir -p /var/run/slurmd
 sudo mkdir -p /var/log/slurm
-sudo chown -R \$USER:\$USER /var/spool/slurmd
-sudo chown -R \$USER:\$USER /var/run/slurmd
-sudo chown -R \$USER:\$USER /var/log/slurm
-slurmd -b -D
+sudo slurmd -b -D
+exit 0
 __TARFILE_FOLLOWS__
-$mytarball
 EOF
 )
 IFS=
+tmpfile=$(mktemp)
+echo $jobscript > $tmpfile
+cat /tmp/slurm.tar >> $tmpfile
 jxe_job=$(cat << EOF
 {
   "app": "$(echo $queue_config | jq -r .$queue.app)",
@@ -123,7 +124,7 @@ jxe_job=$(cat << EOF
   },
   "hpc": {
     "hpc_job_env_config": "",
-    "hpc_job_script": "$(base64 -w 0 <<<$jobscript)",
+    "hpc_job_script": "$(cat $tmpfile | base64 -w 0)",
     "hpc_job_shell": "/bin/bash",
     "hpc_queue": "$queue",
     "hpc_umask": 0,
@@ -144,6 +145,7 @@ jxe_job=$(cat << EOF
 }
 EOF
 )
+rm $tmpfile
     resp=$(echo $jxe_job | curl --fail -X POST \
         -H "Content-Type: application/json" \
         --data-binary @- "$APIURL"jarvice/submit 2> /dev/null || exit 1)
@@ -162,28 +164,27 @@ EOF
             break
         fi
     done
+    while true; do
+        hosts_entry=$(curl --data-urlencode "username=$APIUSER" \
+            --data-urlencode "apikey=$APIKEY" \
+            --data-urlencode "number=$number" \
+            --data-urlencode "lines=1000" \
+            "$APIURL""jarvice/tail" 2>/dev/null)
+        if [ "$(echo $hosts_entry | grep "worker ready")" = "worker ready" ]; then
+            echo "worker ready"
+            break
+        fi
+        sleep 1
+    done
     while IFS= read -r nodeIndex; do
         myNodeName="jarvice-$queue$nodeIndex"
-        while true; do
-            hosts_entry=$(curl --data-urlencode "username=$APIUSER" \
-                --data-urlencode "apikey=$APIKEY" \
-                --data-urlencode "number=$number" \
-                --data-urlencode "lines=1000" \
-                "$APIURL""jarvice/tail" |  grep myEtcHosts | \
-                awk '{$1=""; print $0}' | sed 's/^ *//')
-            if [ "$?" -eq "0" ]; then
-                echo "worker ready"
-                break
-            fi
-            sleep 1
-        done
         echo $number | sudo tee $SLURM_INSTALL/jxe-$myNodeName
         echo $myNodeName | sudo tee --append $SLURM_INSTALL/$number
-        sudo scontrol update nodename=$myNodeName nodeaddr=$worker_ip \
-            nodehostname=$myNodeName
-        slurm_worker_config=$hosts_entry
+        slurm_worker_config=$(echo $hosts_entry | grep $myNodeName)
         echo $slurm_worker_config | sudo tee --append /etc/hosts
         worker_ip=$(echo $slurm_worker_config | awk '{print $1}')
+        sudo scontrol update nodename=$myNodeName nodeaddr=$worker_ip \
+            nodehostname=$myNodeName
         echo "$myNodeName.jarvice.slurm.  IN   A   $worker_ip" | \
             sudo tee --append /root/slurm.db
         soa_update=$(sudo awk 'NR==1{$6='"$(date +\"%Y%m%M%S\")"'; print}' /root/slurm.db)
