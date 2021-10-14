@@ -1,6 +1,10 @@
 # app-slurm
 
-Add on slurm server (slurmctld) for JarviceXE apps. Using this add on will configure and start slurmctld in the background of a running JarviceXE job. Slurm is configured to use Power Saving mode to spawn and tear down worker nodes as needed. Each Slurm job will create one (1) additional JarviceXE job which is cleaned up at job termination. The node pool providing resources for the JarviceXE jobs can utilize kubernetes autoscaling.
+Add-on slurm server (slurmctld) for JarviceXE apps. Using this add-on will configure and start slurmctld in the background of a running JarviceXE job. Slurm is configured to use [Power Saving](https://slurm.schedmd.com/power_save.html) mode to spawn and tear down worker nodes as needed. Each Slurm job will create one (1) additional JarviceXE job which is cleaned up by slurm at completion. The node pool providing resources for the JarviceXE jobs can utilize kubernetes autoscaling.
+
+## Warning
+
+JarviceXE applications that use this add-on will enable users to run arbitrary scripts and launch interactive shells from remote Slurm clients. This behavior may be undesirable for noninteractive applications. 
 
 ## Getting Started
 
@@ -27,7 +31,7 @@ docker build -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-co
 
 #### JarviceXE Vault
 
-The same vault must be accessible to all jobs. Ephemeral vaults are not supported
+All slurmd nodes can use the JarviceXE vault as shared storage mounted at `/data`. 
 
 ### Docker Build Arguments (--build-arg)
 
@@ -66,13 +70,12 @@ exec /usr/bin/my-app "$@"
 
 Update the `xclock` command for your application.
 
-**NOTE** The `APIKEY`, `APIURL`, `APIUSER`, and `JARVICE_VAULT_NAME` AppDef parameters are required for the slurm add on to operate correctly
+**NOTE** The `APIKEY`, `APIURL`, `APIUSER`, and `JARVICE_VAULT_NAME` AppDef parameters are required for the slurm add-on to operate correctly
 
 ## Known Issues
 
 * Slurm version must be the same between slurmctld and worker nodes (slurmd).
 * All slurm nodes must be in the same JARVICE downstream cluster.
-* A temporary working directory is created in a user’s vault (i.e. /data/tmp.XXXX) to store Slurm configuration files which are removed when the main JarviceXE job exits. This cleanup is a best effort and fails when a job is terminated outside of JARVICE Shutdown/Terminate requests.
 * Docker build may use cache layer when changing BASE_IMAGE build argument. Use `--no-cache` flag to force a rebuild.
 
 ## Authors
