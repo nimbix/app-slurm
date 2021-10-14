@@ -18,7 +18,7 @@ RUN /usr/local/bin/install-coredns.sh "${COREDNS_VERSION}"
 
 ############ main app #############
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-gcr.io/jarvice-apps/centos-desktop-realvnc:7}
+FROM ${BASE_IMAGE:-gcr.io/jarvice/centos-desktop:7}
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
