@@ -1,4 +1,5 @@
 {
+    "enablehpc": true,
     "name": "Slurm",
     "description": "Slurm",
     "author": "Nimbix, Inc.",
