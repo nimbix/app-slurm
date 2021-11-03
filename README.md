@@ -46,7 +46,7 @@ Install add on to Nimbix Desktop enabled containers by building with `Dockerfile
 
 ```bash
 git clone https://github.com/nimbix/app-slurm
-docker build -f Dockerfile.gui -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-container>" app-slurm/
+docker build -f app-slurm/Dockerfile.gui -t <container-tag-for-new-app> --build-arg "BASE_IMAGE=<existing-container>" app-slurm/
 ```
 
 The above command will create a CentOS application that opens a xclock window.
