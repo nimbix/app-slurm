@@ -51,6 +51,7 @@ mv /tmp/start-slurm.sh \
     /tmp/suspend-node.sh \
     /tmp/resume-node.sh \
     /tmp/resume-group.sh \
+    /tmp/signal-override.sh \
     "${SLURM_PLUGIN_INSTALL}/scripts/"
 mv /tmp/slurm.conf ${SLURMDIR}
 exit 0
