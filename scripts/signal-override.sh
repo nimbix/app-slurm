@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
-# Copyright (c) 2021, Nimbix, Inc.
+# Copyright (c) 2022, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,29 +29,30 @@
 # policies, either expressed or implied, of Nimbix, Inc.
 #
 set -e
-set -x
-SLURM_PLUGIN_INSTALL="/usr/lib/jarvice.slurm"
-OS_ID=$((cat /etc/os-release | grep ^ID_LIKE= || cat /etc/os-release | grep ^ID=) | cut -d = -f2 | tr -d '"')
-OS_ID=$(echo $OS_ID | grep -o debian || echo $OS_ID | grep -o fedora)
-if [ "$OS_ID" = "debian" ]; then
-    SLURMDIR="/etc/slurm-llnl"
-    DEBIAN_FRONTEND=noninteractive apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get -yq install slurmctld slurmd jq sudo
-else
-    SLURM_VERSION=${SLURM_VERSION:-19.05.5}
-    SLURMDIR="/etc/slurm"
-    cd /usr/lib/slurm/slurm-${SLURM_VERSION}
-    yum install -y epel-release
-    yum -y install jq sudo *.rpm
-    sed -i 's/slurm-llnl/slurm/' /tmp/slurm.conf
-fi
-mkdir -p "${SLURM_PLUGIN_INSTALL}/scripts"
-# move scripts to slurm installation
-mv /tmp/start-slurm.sh \
-    /tmp/suspend-node.sh \
-    /tmp/resume-node.sh \
-    /tmp/resume-group.sh \
-    /tmp/signal-override.sh \
-    "${SLURM_PLUGIN_INSTALL}/scripts/"
-mv /tmp/slurm.conf ${SLURMDIR}
+
+trap 'echo {"error": "signal not supported"}' ERR
+# get slurm info for job
+job=$(scontrol listpids | awk 'NR>1{print $2}')
+pid=$(scontrol listpids | awk 'NR>1{print $1}')
+
+while :
+do
+    case "$1" in
+        20|19)
+            # SIGTSTP/SIGSTOP
+            scontrol suspend $job
+            break
+            ;;
+        18)
+            # SIGCONT
+            scontrol resume $job
+            break
+            ;;
+        *)
+            # throw error
+            false
+            ;;
+    esac
+done
+echo "{\"signal\": $1, \"pid\": $pid}"
 exit 0

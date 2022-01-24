@@ -23,12 +23,15 @@ FROM ${BASE_IMAGE:-centos:7.5.1804}
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
 ARG SLURM_WORKDIR
+# override behavior for jarvice/signal API
+ENV JARVICE_SIGNAL_OVERRIDE="/usr/lib/jarvice.slurm/scripts/signal-override.sh"
 # copy slurm plugin scripts
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/start-slurm.sh /tmp/start-slurm.sh
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/suspend-node.sh /tmp/suspend-node.sh
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/resume-node.sh /tmp/resume-node.sh
 RUN sed -i "s/SLURM_VERSION/$SLURM_VERSION/" /tmp/resume-node.sh
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/resume-group.sh /tmp/resume-group.sh
+COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/signal-override.sh /tmp/signal-override.sh
 # copy slurm plugin scripts
 COPY ${SLURM_WORKDIR:-.}/conf/slurm.conf /tmp/slurm.conf
 # using slurm prolog to setup JarviceXE job environment
