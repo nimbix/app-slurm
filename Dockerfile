@@ -23,6 +23,7 @@ FROM ${BASE_IMAGE:-centos:7.5.1804}
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
 ARG SLURM_WORKDIR
+# override behavior for jarvice/signal API
 ENV JARVICE_SIGNAL_OVERRIDE="/usr/lib/jarvice.slurm/scripts/signal-override.sh"
 # copy slurm plugin scripts
 COPY ${SLURM_WORKDIR:-.}/scripts/start-slurm.sh /tmp/start-slurm.sh
