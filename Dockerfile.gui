@@ -25,7 +25,7 @@ ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
 ARG SLURM_WORKDIR
 # override behavior for jarvice/signal API
 ENV JARVICE_SIGNAL_OVERRIDE="/usr/lib/jarvice.slurm/scripts/signal-override.sh"
-# copy slurm plugin scripts
+# copy slurm plugin scripts (final destination: /usr/lib/jarvice.slurm/scripts)
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/start-slurm.sh /tmp/start-slurm.sh
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/suspend-node.sh /tmp/suspend-node.sh
 COPY --chmod=755 ${SLURM_WORKDIR:-.}/scripts/resume-node.sh /tmp/resume-node.sh
