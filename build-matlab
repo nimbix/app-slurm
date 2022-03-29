@@ -1,0 +1,78 @@
+#!/bin/bash
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+DEST_REPO=""
+DEST_TAG=""
+MATLAB_VERSION="r2021b"
+PUSH=false
+NOCACHE=""
+
+function usage {
+	cat <<EOF
+Usage:
+	$0 [options]
+Options:
+	--repo           <docker_repo>   Docker repo for container (required)
+	--tag            <docker_tag>    Docker tag for repo (required)
+        --matlab-version <version>       Matlab version (default: r2021b)
+        --push                           Push container (default: false)
+        --no-cache                       Docker build w/o cache (default: false)
+Examples:
+	$0 --repo example.org/matlab/matlab --tag latest
+EOF
+}
+
+DOCKER=$(type -p docker)
+if [ -z "$DOCKER" ]; then
+  cat <<EOF
+Could not find 'docker' in PATH. It may not be installed.
+EOF
+  exit 1
+fi
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    --help)
+      usage
+      exit 0
+      ;;
+    --repo)
+      DEST_REPO=$2
+      shift; shift
+      ;;
+    --tag)
+      DEST_TAG=$2
+      shift; shift
+      ;;
+    --matlab-version)
+      MATLAB_VERSION=$2
+      shift; shift
+      ;;
+    --push)
+      PUSH=true
+      shift
+      ;;
+    --no-cache)
+      NOCACHE="--no-cache"
+      shift
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+[ -z "$DEST_REPO" ] && usage && exit 1
+[ -z "$DEST_TAG" ] && usage && exit 1
+
+$DOCKER build -f ./matlab-dockerfile/Dockerfile \
+    --build-arg MATLAB_RELEASE=${MATLAB_VERSION} \
+    -t matlab ${NOCACHE} \
+    $SCRIPTPATH
+
+$DOCKER build -f Dockerfile.gui \
+    --build-arg BASE_IMAGE=matlab \
+    -t ${DEST_REPO}:${DEST_TAG} ${NOCACHE} \
+    $SCRIPTPATH
+
+$PUSH && $DOCKER push ${DEST_REPO}:${DEST_TAG}

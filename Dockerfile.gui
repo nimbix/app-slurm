@@ -1,5 +1,6 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE:-centos:7.5.1804} as getter
+USER root
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
@@ -18,7 +19,15 @@ RUN /usr/local/bin/install-coredns.sh "${COREDNS_VERSION}"
 
 ############ main app #############
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-gcr.io/jarvice/centos-desktop:7}
+FROM ${BASE_IMAGE:-ubuntu:focal}
+USER root
+# add Nimbix desktop
+
+RUN apt-get -y update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install curl && \
+    curl -H 'Cache-Control: no-cache' \
+        https://raw.githubusercontent.com/nimbix/image-common/master/install-nimbix.sh \
+        | bash -s -- --setup-nimbix-desktop
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION:-19.05.5}
@@ -62,7 +71,7 @@ RUN mkdir -p /var/log/munge && chown -R munge:munge /var/log/munge && \
 # setup AppDef
 ARG SLURM_SCRIPT
 ARG APPDEF
-COPY ${SLURM_SCRIPT:-${SLURM_WORKDIR:-.}/scripts/slurm.sh} /usr/lib/jarvice.apps/slurm/slurm.sh
+COPY ${SLURM_SCRIPT:-${SLURM_WORKDIR:-.}/scripts/slurm-matlab.sh} /usr/lib/jarvice.apps/slurm/slurm-matlab.sh
 COPY ${APPDEF:-${SLURM_WORKDIR:-.}/NAE/AppDef.json.gui} /etc/NAE/AppDef.json
 RUN curl --fail -X POST -d @/etc/NAE/AppDef.json https://cloud.nimbix.net/api/jarvice/validate
 

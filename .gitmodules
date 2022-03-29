@@ -1,0 +1,4 @@
+[submodule "matlab-dockerfile"]
+	path = matlab-dockerfile
+	url = https://github.com/nimbix/matlab-dockerfile
+	branch = jarvice
