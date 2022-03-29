@@ -74,7 +74,7 @@ else
 fi
 SKIP=\$(awk '/^__TARFILE_FOLLOWS__/ { print NR + 1; exit 0; }' "\$0")
 tail -n +\${SKIP} "\$0" | tar -pvx -C /tmp
-sudo cp -r /tmp/slurm/* \$SLURMDIR
+sudo cp -r /tmp/\$(basename \${SLURMDIR})/* \$SLURMDIR
 cat \$SLURMDIR/slurm-headnode | sudo tee --append /etc/hosts
 
 myHost=\$(hostname)
