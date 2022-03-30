@@ -3,19 +3,22 @@ SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 DEST_REPO=""
 DEST_TAG=""
 MATLAB_VERSION="r2021b"
+MATLAB_PRODUCTS="MATLAB MATLAB_Parallel_Server Parallel_Computing_Toolbox"
 PUSH=false
-NOCACHE=""
+NOCACHE=false
 
 function usage {
 	cat <<EOF
 Usage:
 	$0 [options]
 Options:
-	--repo           <docker_repo>   Docker repo for container (required)
-	--tag            <docker_tag>    Docker tag for repo (required)
-        --matlab-version <version>       Matlab version (default: r2021b)
-        --push                           Push container (default: false)
-        --no-cache                       Docker build w/o cache (default: false)
+	--repo            <docker_repo>   Docker repo for container (required)
+	--tag             <docker_tag>    Docker tag for repo (required)
+        --matlab-version  <version>       Matlab version (default: $MATLAB_VERSION)
+	--matlab-products <products>      Matlab products/toolbox
+                                          (default: $MATLAB_PRODUCTS)
+        --push                            Push container (default: $PUSH)
+        --no-cache                        Docker build w/o cache (default: $NOCACHE)
 Examples:
 	$0 --repo example.org/matlab/matlab --tag latest
 EOF
@@ -47,12 +50,16 @@ while [ $# -gt 0 ]; do
       MATLAB_VERSION=$2
       shift; shift
       ;;
+    --matlab-products)
+      MATLAB_PRODUCTS=$2
+      shift; shift
+      ;;
     --push)
       PUSH=true
       shift
       ;;
     --no-cache)
-      NOCACHE="--no-cache"
+      NOCACHE=true
       shift
       ;;
     *)
@@ -64,9 +71,11 @@ done
 
 [ -z "$DEST_REPO" ] && usage && exit 1
 [ -z "$DEST_TAG" ] && usage && exit 1
+$NOCACHE && NOCACHE="--no-cache" || NOCACHE=""
 
 $DOCKER build -f ./matlab-dockerfile/Dockerfile \
-    --build-arg MATLAB_RELEASE=${MATLAB_VERSION} \
+    --build-arg MATLAB_RELEASE="${MATLAB_VERSION}" \
+    --build-arg MATLAB_PRODUCTS="${MATLAB_PRODUCTS}" \
     -t matlab ${NOCACHE} \
     $SCRIPTPATH
 

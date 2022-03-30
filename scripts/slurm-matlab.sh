@@ -32,5 +32,7 @@
 /usr/lib/jarvice.slurm/scripts/start-slurm.sh &
 # start sshd
 /usr/lib/JARVICE/tools/bin/sshd_start &
-# Matlab
-exec /opt/matlab/bin/matlab
+# TODO remove
+exec /usr/bin/xclock
+# Matlab TODO fix after licensing
+# exec /opt/matlab/bin/matlab
