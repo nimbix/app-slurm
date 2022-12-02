@@ -59,6 +59,9 @@ COPY --from=getter /usr/local/bin/coredns /usr/local/bin/coredns
 # setup munge
 RUN mkdir -p /var/log/munge && chown -R munge:munge /var/log/munge && \
     mkdir -p /var/log/slurm
+# setup nextflow
+RUN yum install -y java-11-openjdk-devel vim git wget
+RUN wget -O- https://get.nextflow.io | bash && chmod 0755 nextflow && mv nextflow /usr/bin
 # setup AppDef
 ARG SLURM_SCRIPT
 ARG APPDEF

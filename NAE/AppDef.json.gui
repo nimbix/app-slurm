@@ -1,7 +1,7 @@
 {
     "enablehpc": true,
-    "name": "Slurm",
-    "description": "Slurm",
+    "name": "Nextflow",
+    "description": "Nextflow",
     "author": "Nimbix, Inc.",
     "licensed": true,
     "classifications": [
